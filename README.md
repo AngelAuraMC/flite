@@ -4,9 +4,9 @@ The intended purpose of this fork is for [Amethyst-Android](https://github.com/A
 It still works as before, running `make` will give you your static libraries (`.a`)
 
 You may build `.so` files using `make -C android`. These will be put into a generated, top-level folder named `jniLibs`.
+> It was done with a seperate `Makefile` because flite automatically disables building `main` and `tools` when cross-compiling.
 
-It was done with a seperate `Makefile` because flite automatically disables building `main` and `tools` when cross-compiling.
-If you would like those directories to still be built, please use `make BYPASS_ENABLE_SHARED_CROSSCOMPILE_LOCK=1`.
+If you would like to build all `bin` and `lib` as they normally are, please use `./configure --enable-shared ...`. This was forcibly disabled for android on the original repo, it is now configurable.
 
 ___
          Flite: a small run-time speech synthesis engine

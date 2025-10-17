@@ -4337,7 +4337,6 @@ case "$target_os" in
         android*)
                 # For Android with Android NDK
                 # http://developer.android.com/sdk/ndk/index.html
-		shared=false
 
     # Use newer variable $ANDROID_NDK_HOME if old variable is not present
       if test -z "$ANDROID_NDK"; then
@@ -4500,7 +4499,7 @@ fi
 
 if test "$shared" = true; then
    case "$target_os" in
-	linux*|k*bsd*-gnu|gnu*)
+	linux*|k*bsd*-gnu|gnu*|android)
 		SHFLAGS="-fPIC"
         ;;
 	solaris*)

@@ -59,10 +59,11 @@ BUILD_DIRS = ../include ../src ../lang
 flite_MODS = $(VOICELIBS) $(LANGS:%=flite_%) $(LEXES:%=flite_%)
 flite_LIBS = $(flite_MODS) flite
 
-ifdef BYPASS_ENABLE_SHARED_CROSSCOMPILE_LOCK
+include $(TOP)/config/config
+ifdef SHFLAGS 
 OTHER_BUILD_DIRS = ../main ../tools
-SHFLAGS = -fPIC # Triggers an ifdef that starts building things "normally", basically spoofs linux*|k*bsd*-gnu|gnu*|solaris on $target_os during ./configure
-endif
+include $(TOP)/config/common_make_rules
+else
 ALL = shared_libs strip_libs
 include $(TOP)/config/common_make_rules
 SHAREDARLIBS= $(flite_LIBS:%=$(LIBDIR)/lib%.a)
@@ -83,3 +84,5 @@ $(LIBDIR)/%.so: $(LIBDIR)/%.a
 	@ (cd shared_os && $(AR) x ../$<)
 	@ (cd shared_os && $(CC) -shared -Wl,-soname,`basename $@` -o ../$@ *.o $(LDFLAGS))
 	@ rm -rf shared_os
+endif
+
