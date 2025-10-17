@@ -51,9 +51,27 @@ SRCS =
 OBJS = $(SRCS:.c=.o)
 IMGS = 
 OTHER = 
-FILES = Makefile README 
+FILES = Makefile README
+ALL = shared_libs strip_libs
+BUILD_DIRS = ../include ../src ../lang
+
+flite_MODS = $(VOICELIBS) $(LANGS:%=flite_%) $(LEXES:%=flite_%)
+flite_LIBS = $(flite_MODS) flite
 
 include $(TOP)/config/common_make_rules
 
-all: 
+SHAREDARLIBS= $(flite_LIBS:%=$(LIBDIR)/lib%.shared.a)
+SHAREDLIBS = $(SHAREDARLIBS:%.shared.a=%.so)
+shared_libs: $(SHAREDLIBS)
+
+$(LIBDIR)/%.so: $(LIBDIR)/%.shared.a
+	@ echo making $@
+	@ rm -rf shared_os && mkdir shared_os
+	@ rm -f $@ $@.${PROJECT_VERSION} $@.${PROJECT_SHLIB_VERSION}
+	@ (cd shared_os && $(AR) x ../$<)
+	@ (cd shared_os && $(CC) -shared -Wl,-soname,`basename $@` -o ../$@ *.os $(LDFLAGS))
+	@ rm -rf shared_os
+
+strip_libs: $(SHAREDLIBS)
+	$(STRIP) -s -v $(SHAREDLIBS)
 

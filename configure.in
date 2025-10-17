@@ -155,17 +155,12 @@ dnl         ;;
         android*)
                 # For Android with Android NDK
                 # http://developer.android.com/sdk/ndk/index.html
-		shared=false
+		# shared=false
 
     # Use newer variable $ANDROID_NDK_HOME if old variable is not present
       if test -z "$ANDROID_NDK"; then
         ANDROID_NDK="${ANDROID_NDK_HOME}/../android-ndk-r10e"
       fi
-    # Allow making .so instead of .a
-    if test "$shared" = yes; then
-      CFLAGS="$CFLAGS -fPIC"
-      LDFLAGS="$LDFLAGS -shared"
-    fi
 
 		# We target our compilation to android-21 (5.0) platform
 		ANDROID_NDK_PLATFORM_PATH="$ANDROID_NDK/platforms/android-21"
@@ -218,6 +213,15 @@ dnl         ;;
                 RANLIB="${ANDROIDBIN}-ranlib"
                 AR="${ANDROIDBIN}-ar"
                 NM="${ANDROIDBIN}-nm"
+                STRIP="${ANDROIDBIN}-strip"
+
+
+    # Allow making .so instead of .a
+    if "$shared"; then
+      AC_MSG_NOTICE([Shared Library Enabled])
+      CFLAGS="$CFLAGS -fPIC"
+      LDFLAGS="$LDFLAGS -fPIC -shared --sysroot=$ANDROID_NDK_SYSROOT"
+    fi
 
     AC_MSG_CHECKING([for Android GCC compiler])
     if test -x "$CC" || command -v "$CC" >/dev/null 2>&1; then
@@ -304,7 +308,7 @@ fi
 
 if test "$shared" = true; then
    case "$target_os" in
-	linux*|k*bsd*-gnu|gnu*)
+	linux*|k*bsd*-gnu|gnu*|android)
 		SHFLAGS="-fPIC"
         ;;
 	solaris*)
@@ -524,5 +528,5 @@ AC_ARG_WITH( langvox,
 	[  --with-langvox          with subsets of lang, lex and voices ],
         FL_LANGVOX=$with_langvox )
 AC_SUBST(FL_LANGVOX)
-
+AC_MSG_NOTICE([Env var $CFLAGS | $LDFLAGS | $SHFLAGS])
 AC_OUTPUT(config/config config/system.mak)
