@@ -51,9 +51,35 @@ SRCS =
 OBJS = $(SRCS:.c=.o)
 IMGS = 
 OTHER = 
-FILES = Makefile README 
+FILES = Makefile README
 
+
+BUILD_DIRS = ../include ../src ../lang
+
+flite_MODS = $(VOICELIBS) $(LANGS:%=flite_%) $(LEXES:%=flite_%)
+flite_LIBS = $(flite_MODS) flite
+
+ifdef BYPASS_ENABLE_SHARED_CROSSCOMPILE_LOCK
+OTHER_BUILD_DIRS = ../main ../tools
+SHFLAGS = -fPIC # Triggers an ifdef that starts building things "normally", basically spoofs linux*|k*bsd*-gnu|gnu*|solaris on $target_os during ./configure
+endif
+ALL = shared_libs strip_libs
 include $(TOP)/config/common_make_rules
+SHAREDARLIBS= $(flite_LIBS:%=$(LIBDIR)/lib%.a)
+SHAREDLIBS = $(SHAREDARLIBS:%.a=%.so)
+shared_libs: $(SHAREDLIBS)
 
-all: 
+strip_libs: $(SHAREDLIBS)
+	$(STRIP) -s -v $(SHAREDLIBS)
 
+$(LIBDIR)/%.a: $(FULLOBJS)
+	@ (cd $(OBJDIR) && $(AR) crv ../../../$(LIBDIR)/lib$(LIBNAME).a $(OBJS))
+	@ $(RANLIB) $(LIBDIR)/lib$(LIBNAME).a
+
+$(LIBDIR)/%.so: $(LIBDIR)/%.a
+	@ echo android making $@
+	@ rm -rf shared_os && mkdir shared_os
+	@ rm -f $@ $@.${PROJECT_VERSION} $@.${PROJECT_SHLIB_VERSION}
+	@ (cd shared_os && $(AR) x ../$<)
+	@ (cd shared_os && $(CC) -shared -Wl,-soname,`basename $@` -o ../$@ *.o $(LDFLAGS))
+	@ rm -rf shared_os

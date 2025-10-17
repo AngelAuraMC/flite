@@ -4403,6 +4403,11 @@ case "$target_os" in
                 RANLIB="${ANDROIDBIN}-ranlib"
                 AR="${ANDROIDBIN}-ar"
                 NM="${ANDROIDBIN}-nm"
+                STRIP="${ANDROIDBIN}-strip"
+
+    # Allows making .so instead of .a because `ar` needs LDFLAGS. CFLAGS is here just to be safe and overkill.
+      CFLAGS="$CFLAGS -fPIC"
+      LDFLAGS="$LDFLAGS -fPIC -shared --sysroot=$ANDROID_NDK_SYSROOT"
 
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for Android GCC compiler" >&5
 printf %s "checking for Android GCC compiler... " >&6; }
