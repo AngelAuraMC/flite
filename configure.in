@@ -224,7 +224,7 @@ dnl         ;;
                 STRIP="${ANDROIDBIN}-strip"
 
     # Allows making .so instead of .a because `ar` needs LDFLAGS. CFLAGS is here just to be safe and overkill.
-      CFLAGS="$CFLAGS -fPIC"
+      CFLAGS="$CFLAGS -fPIC -D_STRINGS_H_"
       LDFLAGS="$LDFLAGS -fPIC -shared --sysroot=$ANDROID_NDK_SYSROOT"
 
     AC_MSG_CHECKING([for Android GCC compiler])

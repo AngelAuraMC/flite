@@ -74,5 +74,5 @@ $(BINDIR)/find_sts: find_sts_main.o $(FLITELIBS)
 $(BINDIR)/flite_sort: flite_sort_main.o $(FLITELIBS)
 	$(CC) $(CFLAGS) -o $@ flite_sort_main.o $(FLITELIBFLAGS) $(LDFLAGS)
 makescripts:
-	@ cp -p $(SCRIPTS) $(TOP)/bin
+	@ cp -p $(SCRIPTS) $(BINDIR)
 
