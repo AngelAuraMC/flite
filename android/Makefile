@@ -78,25 +78,59 @@ ANDROID_ABI = $(strip\
 LOCAL_CLEAN = $(wildcard $(TOP)/jniLibs/$(ANDROID_ABI)/*.so)
 SHAREDARLIBS = $(flite_LIBS:%=$(LIBDIR)/lib%.a)
 SHAREDLIBS = $(SHAREDARLIBS:%.a=%.so)
+SHAREDMODS = $(flite_MODS:%=$(LIBDIR)/lib%.so)
+$(SHAREDMODS): $(LIBDIR)/libflite.so
+SHAREDusenMODS = $(LIBDIR)/libflite_cmu_time_awb.so $(LIBDIR)/libflite_cmu_us_awb.so $(LIBDIR)/libflite_cmu_us_kal16.so $(LIBDIR)/libflite_cmu_us_kal.so $(LIBDIR)/libflite_cmu_us_rms.so $(LIBDIR)/libflite_cmu_us_slt.so $(LIBDIR)/libflite_cmu_indic_lang.so
+$(SHAREDusenMODS): $(LIBDIR)/libflite_usenglish.so
+SHAREDcmulexMODS = $(LIBDIR)/libflite_cmu_time_awb.so $(LIBDIR)/libflite_cmu_us_awb.so $(LIBDIR)/libflite_cmu_us_kal16.so $(LIBDIR)/libflite_cmu_us_kal.so $(LIBDIR)/libflite_cmu_us_rms.so $(LIBDIR)/libflite_cmu_us_slt.so  $(LIBDIR)/libflite_cmu_indic_lex.so
+$(SHAREDcmulexMODS): LDFLAGS+=-L../$(LIBDIR) -lflite_cmulex
+SHAREDindicMODS = $(LIBDIR)/libflite_cmu_indic_lex.so
+$(SHAREDindicMODS): $(LIBDIR)/libflite_cmu_indic_lang.so
+# # These are broken, don't uncomment this until you figure out why they all leak into eachother, like it makes libflite.so link itself, cmulex, indix, and usenglish, whyy?
+# $(SHAREDMODS): LDFLAGS+=-L../$(LIBDIR) -lflite
+# $(SHAREDusenMODS): LDFLAGS+=-L../$(LIBDIR) -lflite_usenglish
+# $(SHAREDcmulexMODS): LDFLAGS+=-L../$(LIBDIR) -lflite_cmulex
+# $(SHAREDindicMODS): LDFLAGS+=-L../$(LIBDIR) -lflite_cmu_indic_lang
 
 strip_libs: $(SHAREDLIBS)
 	$(STRIP) -s $(SHAREDLIBS)
 
-copy_to_jniLibs: strip_libs
+copy_to_jniLibs: $(SHAREDLIBS)
 	@ echo Copying libraries to jniLibs/$(ANDROID_ABI)
 	@ mkdir -p $(TOP)/jniLibs/$(ANDROID_ABI)
 	@ cp -t $(TOP)/jniLibs/$(ANDROID_ABI) $(SHAREDLIBS)
 
+$(LIBDIR)/%.so: $(LIBDIR)/%.a
+	@ echo android making $@ using $(LDFLAGS)
+	@ echo $(SHAREDMODS)
+	@ # Properly link the libraries, because stealing main/Makefile logic failed
+	@ ( \
+			FLAGS="$(LDFLAGS)"; \
+			if echo "$(SHAREDMODS)" | grep -qw "$@"; then \
+					FLAGS="$$FLAGS -L../$(LIBDIR) -lflite"; \
+			fi; \
+			if echo "$(SHAREDusenMODS)" | grep -qw "$@"; then \
+					FLAGS="$$FLAGS -L../$(LIBDIR) -lflite_usenglish"; \
+			fi; \
+			if echo "$(SHAREDcmulexMODS)" | grep -qw "$@"; then \
+					FLAGS="$$FLAGS -L../$(LIBDIR) -lflite_cmulex"; \
+			fi; \
+			if echo "$(SHAREDindicMODS)" | grep -qw "$@"; then \
+					FLAGS="$$FLAGS -L../$(LIBDIR) -lflite_cmu_indic_lang"; \
+			fi; \
+			rm -rf shared_os; \
+			mkdir shared_os; \
+			rm -f $@ $@.${PROJECT_VERSION} $@.${PROJECT_SHLIB_VERSION}; \
+			cd shared_os; \
+			$(AR) x ../$<; \
+			echo "$(CC) -shared -Wl,-soname,`basename $@` -o ../$@ *.o $$FLAGS"; \
+			$(CC) -shared -Wl,-soname,`basename $@` -o ../$@ *.o $$FLAGS; \
+			cd ../; \
+			rm -rf shared_os; \
+		)
+
 $(LIBDIR)/%.a: $(FULLOBJS)
 	@ (cd $(OBJDIR) && $(AR) crv ../../../$(LIBDIR)/lib$(LIBNAME).a $(OBJS))
 	@ $(RANLIB) $(LIBDIR)/lib$(LIBNAME).a
-
-$(LIBDIR)/%.so: $(LIBDIR)/%.a
-	@ echo android making $@
-	@ rm -rf shared_os && mkdir shared_os
-	@ rm -f $@ $@.${PROJECT_VERSION} $@.${PROJECT_SHLIB_VERSION}
-	@ (cd shared_os && $(AR) x ../$<)
-	@ (cd shared_os && $(CC) -shared -Wl,-soname,`basename $@` -o ../$@ *.o $(LDFLAGS))
-	@ rm -rf shared_os
 endif
 

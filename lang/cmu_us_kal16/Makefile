@@ -51,6 +51,6 @@ LIBNAME = flite_cmu_us_kal16
 LOCAL_INCLUDES = -I$(TOP)/lang/usenglish  -I$(TOP)/lang/cmulex
 
 ALL = 
-
 include $(TOP)/config/common_make_rules
+
 
