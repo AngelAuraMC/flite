@@ -3,8 +3,9 @@
 The intended purpose of this fork is for [Amethyst-Android](https://github.com/AngelAuraMC/Amethyst-Android).
 It still works as before, running `make` will give you your static libraries (`.a`)
 
-You may build `.so` files using `make -C android`. These will be put into a generated, top-level folder named `jniLibs`.
+You may build stripped `.so` files using `make -C android`. These will be put into a generated, top-level folder named `jniLibs`.
 > It was done with a seperate `Makefile` because flite automatically disables building `main` and `tools` when cross-compiling.
+>> `main` is what adds the `.so` files to the `all` target
 
 If you would like to build all `bin` and `lib` as they normally are, please use `./configure --enable-shared ...`. This was forcibly disabled for android on the original repo, it is now configurable.
 
@@ -50,7 +51,7 @@ o Flite is all in ANSI C, it contains no C++ or Scheme, thus requires
   more care in programming, and is harder to customize at run-time.
   
 o It is thread safe
-
+:
 o Voices, lexicons and language descriptions can be compiled 
   (mostly automatically for voices and lexicons) into C representations 
   from their FestVox formats

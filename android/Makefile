@@ -53,25 +53,39 @@ IMGS =
 OTHER = 
 FILES = Makefile README
 
-
 BUILD_DIRS = ../include ../src ../lang
-
+VOICES=$(VOXES)
+VOICELIBS=$(VOICES:%=flite_%)
 flite_MODS = $(VOICELIBS) $(LANGS:%=flite_%) $(LEXES:%=flite_%)
 flite_LIBS = $(flite_MODS) flite
+ALL = copy_to_jniLibs
 
-include $(TOP)/config/config
-ifdef SHFLAGS 
+include $(TOP)/config/common_make_rules
+ifdef SHFLAGS
 OTHER_BUILD_DIRS = ../main ../tools
-include $(TOP)/config/common_make_rules
+# Stub target because it's not supposed to do anything here
+copy_to_jniLibs:
 else
-ALL = shared_libs strip_libs
-include $(TOP)/config/common_make_rules
-SHAREDARLIBS= $(flite_LIBS:%=$(LIBDIR)/lib%.a)
+# strip removes a trailing space
+ANDROID_ABI = $(strip\
+								$(if $(filter armv7,$(TARGET_CPU)),armeabi-v7a,\
+								$(if $(filter aarch64,$(TARGET_CPU)),arm64-v8a,\
+								$(if $(filter x86,$(TARGET_CPU)),x86,\
+								$(if $(filter x86_64,$(TARGET_CPU)),x86_64,\
+ 								$(if $(filter mips,$(TARGET_CPU)),mips,\
+ 								$(if $(filter armv5te,$(TARGET_CPU)),armeabi,\
+ 								$(error Unknown TARGET_CPU: $(TARGET_CPU)))))))))
+LOCAL_CLEAN = $(wildcard $(TOP)/jniLibs/$(ANDROID_ABI)/*.so)
+SHAREDARLIBS = $(flite_LIBS:%=$(LIBDIR)/lib%.a)
 SHAREDLIBS = $(SHAREDARLIBS:%.a=%.so)
-shared_libs: $(SHAREDLIBS)
 
 strip_libs: $(SHAREDLIBS)
-	$(STRIP) -s -v $(SHAREDLIBS)
+	$(STRIP) -s $(SHAREDLIBS)
+
+copy_to_jniLibs: strip_libs
+	@ echo Copying libraries to jniLibs/$(ANDROID_ABI)
+	@ mkdir -p $(TOP)/jniLibs/$(ANDROID_ABI)
+	@ cp -t $(TOP)/jniLibs/$(ANDROID_ABI) $(SHAREDLIBS)
 
 $(LIBDIR)/%.a: $(FULLOBJS)
 	@ (cd $(OBJDIR) && $(AR) crv ../../../$(LIBDIR)/lib$(LIBNAME).a $(OBJS))
